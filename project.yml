@@ -1,0 +1,156 @@
+name: PassTrack
+options:
+  deploymentTarget:
+    iOS: "26.0"
+  bundleIdPrefix: com.scottnguyen
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    ENABLE_BITCODE: "NO"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+
+  # ── Shared Framework ────────────────────────────────────────────────────────
+  PassTrackKit:
+    type: framework
+    platform: iOS
+    sources:
+      - path: PassTrackKit/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.scottnguyen.passtrackkit
+        SWIFT_VERSION: "6.0"
+        DEFINES_MODULE: YES
+        SKIP_INSTALL: YES
+    info:
+      path: PassTrackKit/Info.plist
+      properties:
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+
+  # ── Main App ────────────────────────────────────────────────────────────────
+  PassTrack:
+    type: application
+    platform: iOS
+    sources:
+      - path: PassTrack/Sources
+    resources:
+      - path: PassTrack/Resources
+    dependencies:
+      - target: PassTrackKit
+        embed: true
+      - target: PassTrackAutoFill
+        embed: true
+    entitlements:
+      path: PassTrack/PassTrack.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.scottnguyen.passtrack
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.scottnguyen.passtrack
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.scottnguyen.passtrack
+    info:
+      path: PassTrack/Info.plist
+      properties:
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSFaceIDUsageDescription: "PassTrack uses Face ID to unlock your vault."
+        NSCameraUsageDescription: "PassTrack uses the camera to scan QR codes for TOTP setup."
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - passtrack
+            CFBundleURLName: com.scottnguyen.passtrack
+        UILaunchScreen:
+          UIColorName: AccentColor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.scottnguyen.passtrack
+        SWIFT_VERSION: "6.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  # ── AutoFill Credential Provider Extension ──────────────────────────────────
+  PassTrackAutoFill:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PassTrackAutoFill/Sources
+    dependencies:
+      - target: PassTrackKit
+    entitlements:
+      path: PassTrackAutoFill/PassTrackAutoFill.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.scottnguyen.passtrack
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.scottnguyen.passtrack
+    info:
+      path: PassTrackAutoFill/Info.plist
+      properties:
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionAttributes:
+            ASCredentialProviderExtensionCapabilities:
+              ProvidesPasswords: true
+              ProvidesPasskeys: true
+              ProvidesOneTimeCode: true
+          NSExtensionPointIdentifier: com.apple.authentication-services-credential-provider-ui
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).CredentialProviderViewController
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.scottnguyen.passtrack.autofill
+        SWIFT_VERSION: "6.0"
+
+  # ── Unit Tests ───────────────────────────────────────────────────────────────
+  PassTrackKitTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PassTrackKitTests/Sources
+    dependencies:
+      - target: PassTrackKit
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        PRODUCT_BUNDLE_IDENTIFIER: com.scottnguyen.passtrack.tests
+
+schemes:
+  PassTrack:
+    build:
+      targets:
+        PassTrack: all
+        PassTrackKit: all
+        PassTrackAutoFill: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - PassTrackKitTests
+    profile:
+      config: Release
+    archive:
+      config: Release
+
+  PassTrackKitTests:
+    build:
+      targets:
+        PassTrackKitTests: test
+    test:
+      config: Debug
+      targets:
+        - PassTrackKitTests
