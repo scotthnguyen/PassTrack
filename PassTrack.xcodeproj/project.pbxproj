@@ -23,11 +23,13 @@
 		8D66A1B707660B7EAE915E97 /* PassTrackKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 341CCBE2DF79E79C7AFCF24D /* PassTrackKit.framework */; };
 		902BEF03FBC3327B34047478 /* PassTrackKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 341CCBE2DF79E79C7AFCF24D /* PassTrackKit.framework */; };
 		9080C79B49E7B00503C5A9D1 /* AddEditCredentialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11167226883DACAE57A13B5 /* AddEditCredentialView.swift */; };
+		919658003183C0672BEECCCA /* SecureNoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63479A3FF06B9D0C05601CC /* SecureNoteDetailView.swift */; };
 		931146B0EFAF0EDEB04BCBE5 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 190ECB0CAAC12882F6D6E627 /* BiometricAuth.swift */; };
 		98BB6C291F6E02188EB903D8 /* TOTPGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648A603D29D2166BDD151B2E /* TOTPGenerator.swift */; };
 		9DAC5044738487DA17B1A4FA /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA677D9A1D9504239667B1EB /* AppModel.swift */; };
 		A621C3FC8114BFD4E9CCEC45 /* VaultCryptoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E166F90BD3917536BC4926 /* VaultCryptoTests.swift */; };
 		AD93D2413E87F6DC4857B120 /* PassTrackKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 341CCBE2DF79E79C7AFCF24D /* PassTrackKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		ADD46CB917740460E8498C59 /* AddEditSecureNoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0389E0F8454F2908DC013C8 /* AddEditSecureNoteView.swift */; };
 		AE346EAF4BD614C9A0D20640 /* ContentRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A34B086881FEF5F29B878F6 /* ContentRootView.swift */; };
 		AEF97F0208CB721E7EB02988 /* PassTrackKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 341CCBE2DF79E79C7AFCF24D /* PassTrackKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B0E18BE0F6B179DAAF6F416F /* PassTrackAutoFill.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5CE276A78326EFD7A27FFCE7 /* PassTrackAutoFill.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -143,7 +145,9 @@
 		87540804843459965E164FD0 /* VaultStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultStore.swift; sourceTree = "<group>"; };
 		93951B8EB5D0649D2DCC805B /* CredentialEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialEntity.swift; sourceTree = "<group>"; };
 		9DE4A3BBB067280ED223EC5B /* SecureEnclaveKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureEnclaveKey.swift; sourceTree = "<group>"; };
+		A0389E0F8454F2908DC013C8 /* AddEditSecureNoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditSecureNoteView.swift; sourceTree = "<group>"; };
 		A17C40477C05E24B67534FC3 /* KeyDerivationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyDerivationTests.swift; sourceTree = "<group>"; };
+		A63479A3FF06B9D0C05601CC /* SecureNoteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNoteDetailView.swift; sourceTree = "<group>"; };
 		AE50872ED691ED6A5B0FD0DB /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		C11167226883DACAE57A13B5 /* AddEditCredentialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditCredentialView.swift; sourceTree = "<group>"; };
 		C60B0A6007E7EEF622A7CDAB /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -296,12 +300,14 @@
 			isa = PBXGroup;
 			children = (
 				C11167226883DACAE57A13B5 /* AddEditCredentialView.swift */,
+				A0389E0F8454F2908DC013C8 /* AddEditSecureNoteView.swift */,
 				1A34B086881FEF5F29B878F6 /* ContentRootView.swift */,
 				4CBC56580DE8C9077A3B994F /* CredentialDetailView.swift */,
 				6F4FAB09F72C3CF6E02CA5ED /* LockScreenView.swift */,
 				C60B0A6007E7EEF622A7CDAB /* MainTabView.swift */,
 				AE50872ED691ED6A5B0FD0DB /* OnboardingView.swift */,
 				14A935D0EC5CD981E0BC011D /* PasswordGeneratorView.swift */,
+				A63479A3FF06B9D0C05601CC /* SecureNoteDetailView.swift */,
 				20DAE197017E4E4CF035188B /* SecurityAuditView.swift */,
 				55771D706536F2C28E776496 /* SettingsView.swift */,
 				73E19626C739F4BEEF483A1F /* VaultListView.swift */,
@@ -512,6 +518,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9080C79B49E7B00503C5A9D1 /* AddEditCredentialView.swift in Sources */,
+				ADD46CB917740460E8498C59 /* AddEditSecureNoteView.swift in Sources */,
 				9DAC5044738487DA17B1A4FA /* AppModel.swift in Sources */,
 				AE346EAF4BD614C9A0D20640 /* ContentRootView.swift in Sources */,
 				8731831C0D5118D17D2B4212 /* CredentialDetailView.swift in Sources */,
@@ -524,6 +531,7 @@
 				1D511910FDBEA59C367C08D2 /* PassTrackShortcuts.swift in Sources */,
 				CAE7528D5B4D8126E590C956 /* PasswordGeneratorView.swift in Sources */,
 				DC7A81547F06A00137F011ED /* RetrieveCredentialIntent.swift in Sources */,
+				919658003183C0672BEECCCA /* SecureNoteDetailView.swift in Sources */,
 				BF61522D498079E476012C4C /* SecurityAuditView.swift in Sources */,
 				C8936FC62CC7C8640DBD34DD /* SettingsView.swift in Sources */,
 				D670ECA57887B954AA65BC06 /* VaultListView.swift in Sources */,

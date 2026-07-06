@@ -10,6 +10,8 @@ final class AppModel {
     let store: VaultStore = .shared
 
     var needsOnboarding: Bool = !BiometricAuth.isSetUp
+    var pendingRecoveryCode: String?
+    var needsPassphraseReset = false
     var pendingDeepLink: URL?
     var autoLockInterval: TimeInterval = 60
     var clipboardTimeout: TimeInterval = 30
@@ -36,9 +38,22 @@ final class AppModel {
         scheduleAutoLock()
     }
 
-    func setupVault(passphrase: String) throws {
-        let key = try BiometricAuth.setup(passphrase: passphrase)
+    func unlock(recoveryCode: String) throws {
+        let key = try BiometricAuth.unlock(recoveryCode: recoveryCode)
         store.unlock(with: key)
+        needsPassphraseReset = true
+        scheduleAutoLock()
+    }
+
+    func setupVault(passphrase: String) throws {
+        let result = try BiometricAuth.setup(passphrase: passphrase)
+        store.unlock(with: result.dataKey)
+        pendingRecoveryCode = result.recoveryCode
+        // needsOnboarding stays true until user acknowledges the recovery code
+    }
+
+    func acknowledgeRecoveryCode() {
+        pendingRecoveryCode = nil
         needsOnboarding = false
         scheduleAutoLock()
     }
@@ -70,7 +85,6 @@ final class AppModel {
     }
 
     private func navigate(to url: URL) {
-        // Navigation handled in ContentRootView via NavigationPath
         NotificationCenter.default.post(name: .deepLinkReceived, object: url)
     }
 

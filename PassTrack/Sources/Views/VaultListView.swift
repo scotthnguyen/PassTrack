@@ -6,13 +6,16 @@ struct VaultListView: View {
     @State private var searchText = ""
     @State private var credentials: [Credential] = []
     @State private var passkeys: [Passkey] = []
+    @State private var secureNotes: [SecureNote] = []
     @State private var showAddCredential = false
+    @State private var showAddNote = false
+    @State private var showAddMenu = false
     @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
             Group {
-                if credentials.isEmpty && passkeys.isEmpty && searchText.isEmpty {
+                if credentials.isEmpty && passkeys.isEmpty && secureNotes.isEmpty && searchText.isEmpty {
                     emptyState
                 } else {
                     list
@@ -22,13 +25,22 @@ struct VaultListView: View {
             .searchable(text: $searchText, prompt: "Search credentials")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showAddCredential = true
+                    Menu {
+                        Button {
+                            showAddCredential = true
+                        } label: {
+                            Label("New Login", systemImage: "key.fill")
+                        }
+                        Button {
+                            showAddNote = true
+                        } label: {
+                            Label("New Secure Note", systemImage: "note.text")
+                        }
                     } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel("Add credential")
-                    .accessibilityHint("Opens a form to add a new login or secure note")
+                    .accessibilityLabel("Add item")
+                    .accessibilityHint("Choose to add a new login or secure note")
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
@@ -43,6 +55,9 @@ struct VaultListView: View {
             .sheet(isPresented: $showAddCredential) {
                 AddEditCredentialView(mode: .add)
             }
+            .sheet(isPresented: $showAddNote) {
+                AddEditSecureNoteView(mode: .add)
+            }
             .task(id: searchText) {
                 await refresh()
             }
@@ -50,7 +65,6 @@ struct VaultListView: View {
                 await refresh()
             }
         }
-        // Custom VoiceOver rotor for credential categories
         .accessibilityRotor("Logins") {
             ForEach(credentials) { c in
                 AccessibilityRotorEntry(c.title, id: c.id)
@@ -61,13 +75,18 @@ struct VaultListView: View {
                 AccessibilityRotorEntry(p.userName, id: p.id)
             }
         }
+        .accessibilityRotor("Secure Notes") {
+            ForEach(secureNotes) { n in
+                AccessibilityRotorEntry(n.title, id: n.id)
+            }
+        }
     }
 
     private var emptyState: some View {
         ContentUnavailableView(
             "No Credentials",
             systemImage: "key.slash",
-            description: Text("Tap + to add your first login or passkey.")
+            description: Text("Tap + to add your first login or secure note.")
         )
     }
 
@@ -95,6 +114,21 @@ struct VaultListView: View {
                     }
                 }
             }
+
+            if !secureNotes.isEmpty {
+                Section("Secure Notes") {
+                    ForEach(secureNotes) { note in
+                        NavigationLink {
+                            SecureNoteDetailView(note: note)
+                        } label: {
+                            SecureNoteRow(note: note)
+                        }
+                        .accessibilityLabel(note.title)
+                        .accessibilityHint("Double tap to view secure note")
+                    }
+                    .onDelete(perform: deleteNotes)
+                }
+            }
         }
     }
 
@@ -102,6 +136,7 @@ struct VaultListView: View {
         do {
             credentials = try appModel.store.fetchCredentials(matching: searchText)
             passkeys = try appModel.store.fetchPasskeys()
+            secureNotes = try appModel.store.fetchSecureNotes(matching: searchText)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -110,6 +145,13 @@ struct VaultListView: View {
     private func deleteCredentials(at offsets: IndexSet) {
         for index in offsets {
             try? appModel.store.delete(credentials[index])
+        }
+        Task { await refresh() }
+    }
+
+    private func deleteNotes(at offsets: IndexSet) {
+        for index in offsets {
+            try? appModel.store.delete(secureNotes[index])
         }
         Task { await refresh() }
     }
@@ -164,6 +206,31 @@ private struct PasskeyRow: View {
         }
         .padding(.vertical, 2)
         .accessibilityLabel("Passkey for \(passkey.relyingPartyName ?? passkey.relyingPartyID), \(passkey.userName)")
+    }
+}
+
+private struct SecureNoteRow: View {
+    let note: SecureNote
+
+    var body: some View {
+        HStack {
+            Image(systemName: "note.text")
+                .foregroundStyle(.tint)
+                .frame(width: 36, height: 36)
+                .background(.tint.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(note.title)
+                    .font(.body)
+
+                Text(note.updatedAt.formatted(date: .abbreviated, time: .omitted))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
     }
 }
 

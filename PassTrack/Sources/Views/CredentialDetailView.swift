@@ -150,17 +150,21 @@ private struct TOTPView: View {
     let secret: String
     @State private var code: String = "------"
     @State private var secondsRemaining: Int = 30
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(code)
+        HStack(spacing: 16) {
+            TOTPRingView(secondsRemaining: secondsRemaining, reduceMotion: reduceMotion)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(formattedCode)
                     .font(.title2.monospaced().bold())
                     .accessibilityLabel("Two-factor code: \(code.map { String($0) }.joined(separator: " "))")
 
                 Text("\(secondsRemaining)s remaining")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
             }
 
             Spacer()
@@ -179,6 +183,11 @@ private struct TOTPView: View {
         }
     }
 
+    private var formattedCode: String {
+        guard code.count == 6 else { return code }
+        return "\(code.prefix(3)) \(code.suffix(3))"
+    }
+
     private func refreshCode() async {
         while !Task.isCancelled {
             let now = Int(Date().timeIntervalSince1970)
@@ -187,5 +196,35 @@ private struct TOTPView: View {
             code = TOTPGenerator.generate(secret: secret, time: Date())
             try? await Task.sleep(for: .seconds(1))
         }
+    }
+}
+
+private struct TOTPRingView: View {
+    let secondsRemaining: Int
+    let reduceMotion: Bool
+
+    private var fraction: CGFloat { CGFloat(secondsRemaining) / 30 }
+
+    private var ringColor: Color {
+        if secondsRemaining > 20 { return .green }
+        if secondsRemaining > 10 { return .orange }
+        return .red
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 3)
+            Circle()
+                .trim(from: 0, to: fraction)
+                .stroke(ringColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(reduceMotion ? nil : .linear(duration: 1), value: secondsRemaining)
+            Text("\(secondsRemaining)")
+                .font(.caption2.bold())
+                .foregroundStyle(ringColor)
+        }
+        .frame(width: 44, height: 44)
+        .accessibilityHidden(true)
     }
 }

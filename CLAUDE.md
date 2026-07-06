@@ -2,6 +2,10 @@
 
 Accessibility-first credential manager built for the Apple portfolio / interview demo. Targets iOS 26 with Swift 6 strict concurrency from day one.
 
+## Git conventions
+
+- **Never** include `Co-Authored-By: Claude` or any AI attribution in commit messages.
+
 ## Architecture
 
 Three targets linked through a shared framework:
@@ -70,6 +74,24 @@ xcodebuild test -project PassTrack.xcodeproj -scheme PassTrackKitTests -destinat
 - `NSExtensionPrincipalClass` must be `$(PRODUCT_MODULE_NAME).CredentialProviderViewController`.
 - Keep the extension memory footprint tiny — the system will kill heavy extensions.
 
+## Personal-team / free developer account limitations
+
+These capabilities require a paid Apple Developer account and cannot be enabled on a personal team:
+
+| Capability | Impact | Phase |
+|---|---|---|
+| App Groups | Extension can't share the SwiftData store or Keychain with the main app at runtime | Phase 2 |
+| Keychain Sharing | Extension can't read the data key the main app stored | Phase 2 |
+| iCloud / CloudKit | No encrypted sync | Phase 4 |
+| Push Notifications | No background sync wake-ups | Phase 4 |
+
+**Workarounds applied for simulator builds:**
+- `BiometricAuth`: `kSecAttrAccessGroup` removed from all Keychain queries — uses the app's default Keychain group instead of the shared access group.
+- `VaultStore.storeURL`: falls back to `applicationSupportDirectory` when the App Group container is unavailable.
+- `ModelConfiguration`: CloudKit database parameter removed (Phase 4 re-adds it).
+
+When you upgrade to a paid team, add `kSecAttrAccessGroup: "$(AppIdentifierPrefix)com.scottnguyen.passtrack"` back to all Keychain queries in `BiometricAuth.swift` and re-enable App Groups + Keychain Sharing in Xcode Signing & Capabilities for all three targets.
+
 ## Deep link scheme
 
 `passtrack://credential/<uuid>` — opens the app to a specific credential detail view.
@@ -88,7 +110,16 @@ If locked, the lock screen is shown first and navigation happens after unlock.
 - [x] `VaultStore` — SwiftData container, CRUD, in-memory data key, lock/unlock state
 - [x] `BiometricAuth` — Face ID unlock + passphrase fallback, both backed by Keychain
 - [x] Swift Testing suite: `VaultCryptoTests`, `KeyDerivationTests`, `PasswordGeneratorTests`
-- [ ] **Milestone:** Install Xcode, run the app on simulator, add a credential, lock, unlock with Face ID, read it back. Run tests and confirm all pass.
+- [x] App launches on simulator — vault creation (passphrase onboarding) confirmed working
+- [ ] **Milestone:** Add a credential, lock, unlock with Face ID (simulator: Features > Face ID > Matching Face), read it back. Run ⌘U tests and confirm all pass.
+
+**Fixes applied during Phase 0:**
+- Removed `cloudKitDatabase` from `ModelConfiguration` (iCloud not provisioned on personal team)
+- Removed `kSecAttrAccessGroup` from all `BiometricAuth` Keychain queries (Keychain Sharing not provisioned)
+- `VaultStore.storeURL` now creates the target directory before returning the URL
+- Removed passkey registration/assertion from `CredentialProviderViewController` (iOS 26 API differs from plan — deferred to Phase 3)
+- Added `public init() {}` to `CredentialQuery` (required by `EntityQuery` protocol)
+- Added `CFBundleDisplayName` to `PassTrackAutoFill/Info.plist` (required for extension installation)
 
 ---
 

@@ -17,6 +17,7 @@ struct AddEditCredentialView: View {
     @State private var password = ""
     @State private var websiteURL = ""
     @State private var notes = ""
+    @State private var totpSecret = ""
     @State private var isFavorite = false
     @State private var showGenerator = false
     @State private var errorMessage: String?
@@ -68,6 +69,15 @@ struct AddEditCredentialView: View {
                         .accessibilityLabel("Notes")
                 }
 
+                Section("Two-Factor Authentication") {
+                    TextField("TOTP secret key (optional)", text: $totpSecret)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .font(.body.monospaced())
+                        .accessibilityLabel("TOTP secret key")
+                        .accessibilityHint("Optional. Paste the base32 secret from an authenticator setup page to generate two-factor codes.")
+                }
+
                 Section {
                     Toggle("Favorite", isOn: $isFavorite)
                         .accessibilityHint("Marks this credential as a favorite for quick access")
@@ -103,6 +113,7 @@ struct AddEditCredentialView: View {
         username = credential.username
         websiteURL = credential.websiteURL ?? ""
         notes = credential.notes ?? ""
+        totpSecret = credential.totpSecret ?? ""
         isFavorite = credential.isFavorite
         if let decrypted = try? appModel.store.decrypt(credential.encryptedPassword) {
             password = decrypted
@@ -118,13 +129,15 @@ struct AddEditCredentialView: View {
                     username: username,
                     password: password,
                     websiteURL: websiteURL.isEmpty ? nil : websiteURL,
-                    notes: notes.isEmpty ? nil : notes
+                    notes: notes.isEmpty ? nil : notes,
+                    totpSecret: totpSecret.isEmpty ? nil : totpSecret
                 )
             case .edit(let credential):
                 credential.title = title
                 credential.username = username
                 credential.websiteURL = websiteURL.isEmpty ? nil : websiteURL
                 credential.notes = notes.isEmpty ? nil : notes
+                credential.totpSecret = totpSecret.isEmpty ? nil : totpSecret
                 credential.isFavorite = isFavorite
                 try appModel.store.updateCredential(credential, password: password.isEmpty ? nil : password)
             }

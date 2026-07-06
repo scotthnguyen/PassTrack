@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var appModel
     @State private var autoLockIndex = 1
     @State private var clipboardTimeoutIndex = 1
+    @State private var showChangePassphrase = false
 
     private let autoLockOptions: [(String, TimeInterval)] = [
         ("Immediately", 0),
@@ -48,6 +49,11 @@ struct SettingsView: View {
                         appModel.clipboardTimeout = clipboardOptions[i].1
                     }
 
+                    Button("Change Passphrase") {
+                        showChangePassphrase = true
+                    }
+                    .accessibilityHint("Set a new master passphrase. Your saved passwords are not affected.")
+
                     Button("Lock Now") {
                         appModel.lock()
                     }
@@ -67,6 +73,82 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showChangePassphrase) {
+                ChangePassphraseView()
+            }
+        }
+    }
+}
+
+private struct ChangePassphraseView: View {
+    @Environment(AppModel.self) private var appModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var newPassphrase = ""
+    @State private var confirmPassphrase = ""
+    @State private var errorMessage: String?
+    @State private var didSucceed = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    SecureField("New passphrase", text: $newPassphrase)
+                        .accessibilityLabel("New passphrase")
+                    SecureField("Confirm new passphrase", text: $confirmPassphrase)
+                        .accessibilityLabel("Confirm new passphrase")
+                } header: {
+                    Text("New passphrase")
+                } footer: {
+                    Text("Your saved passwords are not affected — only the passphrase used to unlock PassTrack changes.")
+                }
+
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .accessibilityLabel("Error: \(errorMessage)")
+                }
+
+                if didSucceed {
+                    Label("Passphrase updated.", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .accessibilityLabel("Passphrase updated successfully.")
+                }
+            }
+            .navigationTitle("Change Passphrase")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: save)
+                        .disabled(newPassphrase.isEmpty || confirmPassphrase.isEmpty)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard newPassphrase == confirmPassphrase else {
+            errorMessage = "Passphrases do not match."
+            UIAccessibility.post(notification: .announcement, argument: errorMessage!)
+            return
+        }
+        guard newPassphrase.count >= 8 else {
+            errorMessage = "Passphrase must be at least 8 characters."
+            UIAccessibility.post(notification: .announcement, argument: errorMessage!)
+            return
+        }
+        do {
+            try appModel.store.changePassphrase(to: newPassphrase)
+            didSucceed = true
+            errorMessage = nil
+            UIAccessibility.post(notification: .announcement, argument: "Passphrase updated successfully.")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
+        } catch {
+            errorMessage = "Failed to update passphrase. Please try again."
+            UIAccessibility.post(notification: .announcement, argument: errorMessage!)
         }
     }
 }

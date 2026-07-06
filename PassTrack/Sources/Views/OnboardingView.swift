@@ -3,12 +3,13 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppModel.self) private var appModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var passphrase = ""
     @State private var confirmPassphrase = ""
     @State private var errorMessage: String?
     @State private var step: Step = .welcome
 
-    enum Step { case welcome, passphrase }
+    enum Step { case welcome, passphrase, recoveryCode }
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,8 @@ struct OnboardingView: View {
                 welcomeStep
             case .passphrase:
                 passphraseStep
+            case .recoveryCode:
+                recoveryCodeStep
             }
         }
     }
@@ -42,7 +45,7 @@ struct OnboardingView: View {
             Spacer()
 
             Button("Get Started") {
-                withAnimation { step = .passphrase }
+                withAnimation(reduceMotion ? nil : .default) { step = .passphrase }
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -66,7 +69,7 @@ struct OnboardingView: View {
             } header: {
                 Text("Create a master passphrase")
             } footer: {
-                Text("If you forget this passphrase, your vault cannot be recovered. Write it down and store it safely.")
+                Text("If you forget this passphrase, you can recover access using the recovery code shown on the next screen.")
             }
 
             if let errorMessage {
@@ -79,10 +82,50 @@ struct OnboardingView: View {
         .navigationBarBackButtonHidden()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Create Vault", action: createVault)
+                Button("Next", action: createVault)
                     .disabled(passphrase.isEmpty || confirmPassphrase.isEmpty)
             }
         }
+    }
+
+    private var recoveryCodeStep: some View {
+        VStack(spacing: 0) {
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Label("Write this down", systemImage: "pencil.and.list.clipboard")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+
+                        Text(appModel.pendingRecoveryCode ?? "")
+                            .font(.system(.title2, design: .monospaced, weight: .bold))
+                            .tracking(2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .textSelection(.enabled)
+                            .accessibilityLabel("Recovery code: \(appModel.pendingRecoveryCode ?? "")")
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("Your recovery code")
+                } footer: {
+                    Text("This code is the only way to recover your vault if you forget your passphrase and Face ID is unavailable. Store it somewhere safe — a notebook, printed page, or a different password manager. PassTrack will never show it again.")
+                }
+            }
+
+            Button("I've written it down safely") {
+                appModel.acknowledgeRecoveryCode()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 32)
+            .accessibilityHint("Confirms you have saved your recovery code and opens the vault")
+        }
+        .navigationTitle("Recovery Code")
+        .navigationBarBackButtonHidden()
     }
 
     private func createVault() {
@@ -98,6 +141,7 @@ struct OnboardingView: View {
         }
         do {
             try appModel.setupVault(passphrase: passphrase)
+            withAnimation(reduceMotion ? nil : .default) { step = .recoveryCode }
         } catch {
             errorMessage = "Failed to create vault. Please try again."
             UIAccessibility.post(notification: .announcement, argument: errorMessage!)
